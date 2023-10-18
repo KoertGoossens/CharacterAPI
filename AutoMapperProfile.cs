@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using CharacterAPI.Dtos.Character;
+using CharacterAPI.Dtos;
 using CharacterAPI.Models;
 
 namespace CharacterAPI
