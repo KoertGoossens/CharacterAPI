@@ -1,5 +1,4 @@
-﻿using CharacterAPI.Dtos.Character;
-using CharacterAPI.Models;
+﻿using CharacterAPI.Dtos;
 
 namespace CharacterAPI.Services.CharacterService
 {

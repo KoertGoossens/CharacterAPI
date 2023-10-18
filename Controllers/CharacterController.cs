@@ -1,7 +1,5 @@
-﻿using CharacterAPI.Dtos.Character;
-using CharacterAPI.Models;
+﻿using CharacterAPI.Dtos;
 using CharacterAPI.Services.CharacterService;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CharacterAPI.Controllers

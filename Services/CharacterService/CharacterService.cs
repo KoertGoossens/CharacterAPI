@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using CharacterAPI.Data;
-using CharacterAPI.Dtos.Character;
+using CharacterAPI.Dtos;
 using CharacterAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -21,26 +21,64 @@ namespace CharacterAPI.Services.CharacterService
 		public async Task<ServiceResponse<List<GetCharacterDto>>> GetAllCharacters()
 		{
 			var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
-			var dbCharacters = await _context.Characters.ToListAsync();
-			serviceResponse.Data = dbCharacters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToList();
+			var character = await _context.Characters.ToListAsync();
+			serviceResponse.Data = character.Select(c => _mapper.Map<GetCharacterDto>(c)).ToList();
 			return serviceResponse;
 		}
 
 		public async Task<ServiceResponse<GetCharacterDto>> GetCharacterById(int id)
 		{
 			var serviceResponse = new ServiceResponse<GetCharacterDto>();
-			var dbCharacter = await _context.Characters.FirstOrDefaultAsync(c => c.Id == id);
-			serviceResponse.Data = _mapper.Map<GetCharacterDto>(dbCharacter);
+
+			var character = await _context.Characters
+				.Include(c => c.Backpack)
+				.Include(c => c.Weapons)
+				.Include(c => c.Factions)
+				.FirstOrDefaultAsync(c => c.Id == id);
+
+			serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
 			return serviceResponse;
 		}
 
-		public async Task<ServiceResponse<List<GetCharacterDto>>> AddCharacter(AddCharacterDto newCharacter)
+		public async Task<ServiceResponse<List<GetCharacterDto>>> AddCharacter(AddCharacterDto request)
 		{
 			var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
+
+			var newCharacter = new Character
+			{
+				Name = request.Name
+			};
+
+			var backpack = new Backpack
+			{
+				Name = request.Backpack.Name
+			};
+
+			var weapons = request.Weapons.Select(w => new Weapon
+			{
+				Name = w.Name
+			}).ToList();
+
+			var factions = request.Factions.Select(f => new Faction
+			{
+				Name = f.Name
+			}).ToList();
+
+			newCharacter.Backpack = backpack;
+			newCharacter.Weapons = weapons;
+			newCharacter.Factions = factions;
+
 			var character = _mapper.Map<Character>(newCharacter);
 			_context.Characters.Add(character);
 			await _context.SaveChangesAsync();
-			serviceResponse.Data = await _context.Characters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToListAsync();
+
+			serviceResponse.Data = await _context.Characters
+				.Include(c => c.Backpack)
+				.Include(c => c.Weapons)
+				.Include(c => c.Factions)
+				.Select(c => _mapper.Map<GetCharacterDto>(c))
+				.ToListAsync();
+
 			return serviceResponse;
 		}
 
@@ -58,11 +96,7 @@ namespace CharacterAPI.Services.CharacterService
 				}
 
 				character.Name = updatedCharacter.Name;
-				character.HitPoints = updatedCharacter.HitPoints;
 				character.Strength = updatedCharacter.Strength;
-				character.Defense = updatedCharacter.Defense;
-				character.Intelligence = updatedCharacter.Intelligence;
-				character.Class = updatedCharacter.Class;
 
 				await _context.SaveChangesAsync();
 				serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
